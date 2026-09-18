@@ -25,7 +25,9 @@ jobs:
           python-version: "3.12"
 
       - name: Take snapshot
-        run: python scripts/snapshot.py --cron
+        # The ET-hour guard only applies to scheduled runs; manual dispatches
+        # always snapshot the most recent 6 AM ET (a no-op if it already exists).
+        run: python scripts/snapshot.py ${{ github.event_name == 'schedule' && '--cron' || '' }}
 
       - name: Rebuild site data
         run: python scripts/build_data.py

@@ -29,17 +29,17 @@ jobs:
         # always snapshot the most recent 6 AM ET (a no-op if it already exists).
         run: python scripts/snapshot.py ${{ github.event_name == 'schedule' && '--cron' || '' }}
 
-      - name: Rebuild site data
-        run: python scripts/build_data.py
-
-      - name: Commit and push
+      - name: Rebuild site data and push
+        # Rebuild + commit only when a new snapshot file was written; otherwise
+        # build_data.py would commit a timestamp-only data.json change.
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add snapshots docs/data
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
+          if git status --porcelain snapshots/ | grep -q .; then
+            python scripts/build_data.py
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add snapshots docs/data
             git commit -m "Daily snapshot $(TZ=America/New_York date '+%Y-%m-%d')"
             git push
+          else
+            echo "No new snapshot; nothing to commit."
           fi

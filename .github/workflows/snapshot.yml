@@ -2,9 +2,11 @@ name: Daily snapshot
 
 on:
   schedule:
-    # 6:15 AM ET is 10:15 UTC during EDT and 11:15 UTC during EST.
-    # Both hours are scheduled; snapshot.py --cron exits unless the ET hour is 6.
-    - cron: "15 10,11 * * *"
+    # GitHub often delays or drops scheduled runs, so fire hourly from
+    # 10:15-16:15 UTC (6:15 AM ET at the earliest in EDT). Each run snapshots
+    # the most recent 6 AM ET via prices-history, so a late run captures the
+    # same prices, and runs after the first are no-ops.
+    - cron: "15 10-16 * * *"
   workflow_dispatch:
 
 permissions:
@@ -25,9 +27,8 @@ jobs:
           python-version: "3.12"
 
       - name: Take snapshot
-        # The ET-hour guard only applies to scheduled runs; manual dispatches
-        # always snapshot the most recent 6 AM ET (a no-op if it already exists).
-        run: python scripts/snapshot.py ${{ github.event_name == 'schedule' && '--cron' || '' }}
+        # Snapshots the most recent 6 AM ET (a no-op if it already exists).
+        run: python scripts/snapshot.py
 
       - name: Rebuild site data and push
         # Rebuild + commit only when a new snapshot file was written; otherwise

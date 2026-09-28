@@ -2,11 +2,13 @@ name: Daily snapshot
 
 on:
   schedule:
-    # GitHub often delays or drops scheduled runs, so fire hourly from
-    # 10:15-16:15 UTC (6:15 AM ET at the earliest in EDT). Each run snapshots
-    # the most recent 6 AM ET via prices-history, so a late run captures the
-    # same prices, and runs after the first are no-ops.
-    - cron: "15 10-16 * * *"
+    # GitHub queues scheduled runs hardest on the hour and at :15/:30, and in
+    # practice only delivered ~2 of these slots per day at :15 (4-5 hours late).
+    # Off-peak minutes queue sooner. Each run snapshots the most recent 6 AM ET
+    # via prices-history, so a late run still captures the 6 AM prices and runs
+    # after the first one are no-ops.
+    - cron: "7 10-16 * * *"
+    - cron: "38 10-16 * * *"
   workflow_dispatch:
 
 permissions:

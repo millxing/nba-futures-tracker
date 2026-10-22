@@ -46,6 +46,7 @@ EVENTS = [
     "nba-playoffs-team-to-advance-to-eastern-conference-finals",
     "nba-playoffs-team-to-advance-to-western-conference-finals",
     "nba-2026-27-rookie-of-the-year-20260624161716143",
+    "nba-2026-27-mvp",
 ]
 
 COLUMNS = [

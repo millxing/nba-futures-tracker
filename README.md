@@ -2,7 +2,7 @@
 
 Static GitHub Pages site that shows how each day of the NBA season moves
 Polymarket's implied probabilities for end-of-season outcomes (champion,
-conference champions, make playoffs, Rookie of the Year). Snapshotted
+conference champions, make playoffs, Rookie of the Year, MVP). Snapshotted
 automatically every morning at 6:00 AM ET.
 
 Site lives in `docs/` (GitHub Pages source). Snapshots are taken by GitHub
@@ -35,9 +35,8 @@ Then commit and push; GitHub Pages redeploys on push.
 
 Defined in `scripts/snapshot.py` (`EVENTS`, Polymarket event slugs) and ordered
 in `scripts/build_data.py` (`SERIES_ORDER`, event titles). To add a series, add
-its slug + title to those two lists. NBA MVP is currently not listed on
-polymarket.com (only on the separate polymarket.us exchange) — add it when it
-appears.
+its slug + title to those two lists. NBA MVP was added once it listed on
+polymarket.com (Oct 2026); its history starts at the first snapshot after that.
 
 The four playoff-advancement series (conference semifinal/final berths) are
 snapshotted daily but hidden from the site (`EXCLUDED_SERIES` in

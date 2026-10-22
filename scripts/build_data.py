@@ -34,6 +34,7 @@ SERIES_ORDER = [
     "NBA Playoffs: Team to advance to Eastern Conference Finals",
     "NBA Playoffs: Team to advance to Western Conference Finals",
     "NBA: 2026-27 Rookie of the Year",
+    "NBA: 2026-27 MVP",
 ]
 TEAM_SERIES = set(SERIES_ORDER[:8])
 

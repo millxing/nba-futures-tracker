@@ -82,7 +82,9 @@
       from.add(optF);
       to.add(optT);
     });
-    from.value = 0;
+    // Default to the morning before the first games of the season (Oct 20)
+    const seasonStart = DATA.snapshots.findIndex((s) => s.id.startsWith("2026-10-20"));
+    from.value = Math.max(seasonStart, 0);
     to.value = DATA.snapshots.length - 1;
   }
 

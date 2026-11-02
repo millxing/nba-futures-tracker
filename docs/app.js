@@ -295,7 +295,7 @@
 
     const markets = selectedMarkets.map((id) => DATA.markets.find((x) => x.id === id));
     const n = DATA.snapshots.length;
-    const pad = { top: 18, right: 130, bottom: 34, left: 44 };
+    const pad = { top: 18, right: 48, bottom: 34, left: 44 };
     const iw = W - pad.left - pad.right;
     const ih = H - pad.top - pad.bottom;
 
@@ -322,16 +322,11 @@
       el("line", { x1: pad.left, x2: W - pad.right, y1: y, y2: y, class: v === 0 ? "axisline" : "gridline" });
       el("text", { x: pad.left - 8, y: y + 4, "text-anchor": "end", class: "ticktext" }, v + "%");
     }
-    // x ticks: thin to fit ~56px apart, always keep the last
-    const minGap = 56;
-    const every = n > 1 ? Math.max(1, Math.ceil(minGap / (iw / (n - 1)))) : 1;
-    DATA.snapshots.forEach((s, i) => {
-      const last = i === n - 1;
-      if (!last && (i % every !== 0 || (n - 1 - i) < every)) return;
-      const anchor = n > 1 && last ? "end" : n > 1 && i === 0 ? "start" : "middle";
-      const x = anchor === "start" ? xPos(i) - 30 : anchor === "end" ? xPos(i) + 30 : xPos(i);
-      el("text", { x, y: H - pad.bottom + 18, "text-anchor": anchor, class: "ticktext" }, s.label);
-    });
+    // x ticks: evenly spaced ~56px apart, counted back from the latest snapshot
+    const every = n > 1 ? Math.max(1, Math.ceil(56 / (iw / (n - 1)))) : 1;
+    for (let i = n - 1; i >= 0; i -= every) {
+      el("text", { x: xPos(i), y: H - pad.bottom + 18, "text-anchor": "middle", class: "ticktext" }, DATA.snapshots[i].label);
+    }
 
     // lines + points
     markets.forEach((m, mi) => {
@@ -363,7 +358,7 @@
     }
     labels.forEach((L) => {
       el("text", { x: W - pad.right + 8, y: L.y + 4, fill: SERIES_COLORS[L.mi], class: "end-label" },
-        `${truncate(L.name, 14)} ${L.v.toFixed(1)}`);
+        `${L.v.toFixed(1)}%`);
     });
 
     // hover crosshair + tooltip

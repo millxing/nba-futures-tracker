@@ -322,11 +322,15 @@
       el("line", { x1: pad.left, x2: W - pad.right, y1: y, y2: y, class: v === 0 ? "axisline" : "gridline" });
       el("text", { x: pad.left - 8, y: y + 4, "text-anchor": "end", class: "ticktext" }, v + "%");
     }
-    // x ticks
+    // x ticks: thin to fit ~56px apart, always keep the last
+    const minGap = 56;
+    const every = n > 1 ? Math.max(1, Math.ceil(minGap / (iw / (n - 1)))) : 1;
     DATA.snapshots.forEach((s, i) => {
-      const anchor = n > 1 && i === 0 ? "start" : n > 1 && i === n - 1 ? "end" : "middle";
+      const last = i === n - 1;
+      if (!last && (i % every !== 0 || (n - 1 - i) < every)) return;
+      const anchor = n > 1 && last ? "end" : n > 1 && i === 0 ? "start" : "middle";
       const x = anchor === "start" ? xPos(i) - 30 : anchor === "end" ? xPos(i) + 30 : xPos(i);
-      el("text", { x, y: H - pad.bottom + 18, "text-anchor": anchor, class: "ticktext" }, snapLabel(s));
+      el("text", { x, y: H - pad.bottom + 18, "text-anchor": anchor, class: "ticktext" }, s.label);
     });
 
     // lines + points

@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NBA Futures Tracker</title>
-<meta name="description" content="How each day of the season moves the market's view of the NBA endgame. Polymarket prices, snapshotted every morning at 6 AM ET.">
+<meta name="description" content="How each day of the season moves the market's view of the NBA endgame. Kalshi and Polymarket prices, snapshotted every morning at 6 AM ET.">
 <link rel="canonical" href="https://millxing.github.io/nba-futures-tracker/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="NBA Futures Tracker">
 <meta property="og:title" content="NBA Futures Tracker">
-<meta property="og:description" content="How each day of the season moves the market's view of the NBA endgame. Polymarket prices, updated daily.">
+<meta property="og:description" content="How each day of the season moves the market's view of the NBA endgame. Kalshi and Polymarket prices, updated daily.">
 <meta property="og:url" content="https://millxing.github.io/nba-futures-tracker/">
 <meta property="og:image" content="https://millxing.github.io/nba-futures-tracker/share-card.jpg">
 <meta property="og:image:width" content="1672">
@@ -17,13 +17,13 @@
 <meta property="og:image:alt" content="NBA Futures Tracker">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="NBA Futures Tracker">
-<meta name="twitter:description" content="How each day of the season moves the market's view of the NBA endgame. Polymarket prices, updated daily.">
+<meta name="twitter:description" content="How each day of the season moves the market's view of the NBA endgame. Kalshi and Polymarket prices, updated daily.">
 <meta name="twitter:image" content="https://millxing.github.io/nba-futures-tracker/share-card.jpg">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏀</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to markets</a>
@@ -31,7 +31,7 @@
 <header class="masthead">
   <div class="masthead-inner">
     <h1>NBA <span>Futures</span> Tracker</h1>
-    <p class="tagline">Polymarket probabilities · Daily snapshots at 6 AM ET.</p>
+    <p class="tagline">Kalshi + Polymarket probabilities · Daily snapshots at 6 AM ET.</p>
   </div>
   <nav class="tabs" role="tablist" aria-label="Market views">
     <button class="tab active" id="tab-movers" aria-controls="view-movers" tabindex="0" data-view="movers" role="tab" aria-selected="true">Daily Movers</button>
@@ -42,6 +42,12 @@
 </header>
 
 <main id="main" tabindex="-1">
+  <fieldset class="source-toggle" aria-describedby="source-note">
+    <legend>Price source</legend>
+    <label><input type="radio" name="price-source" value="kalshi"><span>Kalshi</span></label>
+    <label><input type="radio" name="price-source" value="polymarket"><span>Polymarket</span></label>
+    <label><input type="radio" name="price-source" value="average" checked><span>Average</span></label>
+  </fieldset>
   <!-- ============ MOVERS VIEW ============ -->
   <section role="tabpanel" aria-labelledby="tab-movers" id="view-movers" class="view active">
     <div class="controls">
@@ -64,7 +70,6 @@
       </div>
     </div>
 
-    <div class="movers-summary" id="movers-summary" role="status"></div>
     <div class="movers-header">
       <span class="col-rank">#</span>
       <span class="col-name">Market</span>
@@ -90,7 +95,6 @@
       </div>
     </div>
     <div class="chart-tools"><span id="selection-status" role="status"></span><button id="clear-markets" type="button">Clear all</button><label><input id="full-season" type="checkbox"> Full season</label></div>
-    <p id="chart-range" class="movers-summary"></p>
     <div id="ts-chips" class="chips"></div>
     <div id="ts-chart-wrap" class="chart-wrap">
       <svg id="ts-chart" role="img" aria-label="Time series of market probabilities"></svg>
@@ -102,22 +106,25 @@
   <section role="tabpanel" aria-labelledby="tab-teams" id="view-teams" class="view">
     <div class="controls"><div class="control grow"><label for="team-select">Choose a team</label><select id="team-select"><option value="">All teams</option></select></div></div>
     <div id="team-content"></div>
-    <p id="roster-note" class="movers-summary"></p>
   </section>
   <section role="tabpanel" aria-labelledby="tab-favorites" id="view-favorites" class="view">
     <h2>Your favorites</h2>
-    <p class="movers-summary">Save teams and individual markets with the star buttons. Favorites stay in this browser.</p>
     <div id="favorites-content"></div>
   </section>
   <p id="favorite-status" class="movers-summary" role="status" aria-live="polite"></p>
 </main>
 
 <footer>
+  <p id="source-note" class="source-note" role="status"></p>
+  <div class="movers-summary" data-note-view="movers" id="movers-summary" role="status"></div>
+  <p id="chart-range" class="movers-summary" data-note-view="series" hidden></p>
+  <p id="roster-note" class="movers-summary" data-note-view="teams" hidden></p>
+  <p class="movers-summary" data-note-view="favorites" hidden>Save teams and individual markets with the star buttons. Favorites stay in this browser.</p>
   <span id="gen-note"></span>
   <span class="sep">&middot;</span>
-  <span><a href="https://polymarket.com">Polymarket</a> price history · Probabilities in %; change in percentage points (pp). — means no observation. MVP snapshots for Oct 20–21 were backfilled from historical observations at or before 6 AM ET.</span>
+  <span><a href="https://kalshi.com">Kalshi</a> + <a href="https://polymarket.com">Polymarket</a> price history · Probabilities in %; change in percentage points (pp). — means no observation. MVP snapshots for Oct 20–21 were backfilled from historical observations at or before 6 AM ET.</span>
 </footer>
 
-<script src="app.js?v=6"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

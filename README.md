@@ -1,7 +1,7 @@
 # NBA Futures Tracker
 
 Static GitHub Pages site that shows how each day of the NBA season moves
-Polymarket's implied probabilities for end-of-season outcomes (champion,
+Kalshi and Polymarket implied probabilities for end-of-season outcomes (champion,
 conference champions, make playoffs, Rookie of the Year, MVP). Snapshotted
 automatically every morning at 6:00 AM ET.
 
@@ -9,7 +9,7 @@ Site lives in `docs/` (GitHub Pages source). Snapshots are taken by GitHub
 Actions (`.github/workflows/snapshot.yml`), which fetches prices, rebuilds the
 JSON, commits, and pushes — Pages redeploys automatically. No manual steps.
 
-Prices come from Polymarket's (polymarket.com) CLOB `prices-history` endpoint:
+Polymarket prices come from Polymarket's (polymarket.com) CLOB `prices-history` endpoint:
 the last trade at or before 6:00 AM ET. That also means snapshots can be taken
 retroactively for any past date.
 
@@ -24,6 +24,9 @@ python3 scripts/snapshot.py --at "2026-09-10 06:00"
 
 # Backfill the last N days of 6:00 AM ET snapshots (existing files skipped)
 python3 scripts/snapshot.py --backfill 14
+
+# Backfill Kalshi at every existing Polymarket timestamp (existing files skipped)
+python3 scripts/kalshi.py --backfill
 
 # Rebuild docs/data/data.json from all snapshot CSVs
 python3 scripts/build_data.py
@@ -68,7 +71,8 @@ Daily 6 AM snapshots get automatic date labels ("Sep 18"). Optional
 ## Layout
 
 - `snapshots/` — raw snapshot CSVs (`nba_markets_snapshot_YYYY-MM-DD_HHMM_EDT.csv`)
-- `scripts/snapshot.py` — fetches one or more snapshots from Polymarket
+- `scripts/snapshot.py` — fetches one or more snapshots from both exchanges
+- `scripts/kalshi.py` — collects historical Kalshi midpoint quotes and backfills existing dates
 - `scripts/build_data.py` — converts all snapshots to `docs/data/data.json`
 - `docs/` — the site: `index.html`, `app.js`, `style.css`, `data/data.json`
 - `.github/workflows/snapshot.yml` — daily 6 AM ET automation
@@ -96,3 +100,31 @@ accents, or punctuation; LA Clippers is normalized to Los Angeles Clippers.
 assignments). Supplements apply only when the player is absent from every ESPN
 roster, so an explicit new team from ESPN takes precedence. Review supplements
 when affiliations change; each entry includes its verification date and source.
+
+## Price sources and history
+
+The global Kalshi / Polymarket / Average selector applies to Movers, Time Series,
+Teams, and Favorites. Average is the equal-weight mean of the two prices and
+requires both observations. Missing prices remain blank; no single-source fallback.
+Movers initially sorts by Average absolute delta (percentage points), descending.
+Switching sources preserves row order. Clicking a sort header, changing dates,
+or filtering recalculates the order using the selected source. Teams and Favorites
+keep their latest Average price order across source changes.
+
+Kalshi snapshots use the historical YES bid/ask midpoint at or before each exact
+Polymarket snapshot timestamp. Separate `kalshi_nba_markets_snapshot_*.csv` files
+preserve quote values and candle timestamps. The initial backfill covers all 63
+snapshots, September 5–November 6, 2026: 10,110 quotes across 162 contracts.
+The 96 missing contract/date observations precede the opening of Kawhi Leonard's
+MVP contract or Ryan Conwell's Rookie of the Year contract. No prices are invented
+for those dates. Kalshi-only candidates are retained with stable IDs; Average is
+blank wherever Polymarket has no corresponding observation. Explicit 2027 event
+mappings prevent prices from different seasons being combined.
+
+Daily automation collects both exchanges via `snapshot.py`. Reruns independently
+skip each existing source file. The data build fails if a matching Kalshi snapshot
+is missing. Existing Polymarket history and favorite IDs are preserved.
+
+Validation: `python3 -m unittest discover -s tests`. For the UI regression check,
+install `jsdom` outside the repository and run
+`NODE_PATH=/path/to/node_modules node tests/check_ui.cjs`.

@@ -28,6 +28,11 @@
   const fmt = (v) => (v == null ? "—" : v.toFixed(1));
 
   let DATA = null;
+  let source = "average";
+  const sourceLabel = () => ({kalshi: "Kalshi", polymarket: "Polymarket", average: "Average"})[source];
+  const pricesFor = (m, selectedSource = source) => selectedSource === "average"
+    ? m.prices.polymarket.map((p, i) => p == null || m.prices.kalshi[i] == null ? null : (p + m.prices.kalshi[i]) / 2)
+    : m.prices[selectedSource];
   let ROSTERS = null;
   let teams = [];
   const marketTeams = new Map();
@@ -58,6 +63,19 @@
 
   function init() {
     $("gen-note").textContent = `Data generated ${DATA.generated} · ${DATA.markets.length} markets · ${DATA.snapshots.length} snapshots`;
+    document.querySelectorAll('input[name="price-source"]').forEach(input => {
+      input.addEventListener("change", () => {
+        source = input.value;
+        renderSourceNote();
+        $("ts-suggestions").hidden = true;
+        $("ts-market-search").setAttribute("aria-expanded", "false");
+        renderMovers(true);
+        renderTimeSeries();
+        renderTeams();
+        renderFavorites();
+      });
+    });
+    renderSourceNote();
     buildSnapshotSelects();
     buildSeriesFilters();
     initTeams();
@@ -71,6 +89,14 @@
     renderFavorites();
     applyRoute();
     window.addEventListener("hashchange", applyRoute);
+  }
+
+  function renderSourceNote() {
+    $("source-note").textContent = source === "average"
+      ? "Equal-weight average of Kalshi midpoint and Polymarket price. Both observations required; — means one or both are missing."
+      : source === "kalshi"
+      ? "Kalshi bid/ask midpoint. — means no observation."
+      : "Polymarket historical price. — means no observation.";
   }
 
   /* ---------------- tabs ---------------- */
@@ -103,6 +129,9 @@
     });
     document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
     $(`view-${view}`).classList.add("active");
+    document.querySelectorAll("[data-note-view]").forEach(note => {
+      note.hidden = note.dataset.noteView !== view;
+    });
     if (view === "series") renderTimeSeries();
     if (view === "teams") renderTeams();
     if (view === "favorites") renderFavorites();
@@ -142,6 +171,8 @@
   }
 
   const moversSort = { key: "delta", asc: false };
+  let moversOrder = new Map();
+  let sortSourceLabel = "Average";
 
   function bindMoversControls() {
     ["from-select", "to-select", "series-filter"].forEach((id) =>
@@ -158,7 +189,7 @@
     });
   }
 
-  function renderMovers() {
+  function renderMovers(preserveOrder = false) {
     const fromIdx = +$("from-select").value;
     const toIdx = +$("to-select").value;
     const series = $("series-filter").value;
@@ -168,26 +199,32 @@
       .filter((m) => series === "all" || m.series === series)
       .filter((m) => !q || m.name.toLowerCase().includes(q) || m.question.toLowerCase().includes(q))
       .map((m) => {
-        const a = m.prices[fromIdx];
-        const b = m.prices[toIdx];
+        const a = pricesFor(m)[fromIdx];
+        const b = pricesFor(m)[toIdx];
         return { m, a, b, d: a != null && b != null ? b - a : null };
       });
 
     const keyFn = { delta: (r) => (r.d == null ? null : Math.abs(r.d)), from: (r) => r.a, to: (r) => r.b }[moversSort.key];
-    rows.sort((x, y) => {
-      const kx = keyFn(x);
-      const ky = keyFn(y);
-      if (kx == null && ky == null) return x.m.name.localeCompare(y.m.name);
-      if (kx == null) return 1;      // nulls always sink to the bottom
-      if (ky == null) return -1;
-      return moversSort.asc ? kx - ky : ky - kx;
-    });
+    if (preserveOrder === true) {
+      rows.sort((x, y) => moversOrder.get(x.m.id) - moversOrder.get(y.m.id));
+    } else {
+      rows.sort((x, y) => {
+        const kx = keyFn(x);
+        const ky = keyFn(y);
+        if (kx == null && ky == null) return x.m.name.localeCompare(y.m.name);
+        if (kx == null) return 1;      // nulls always sink to the bottom
+        if (ky == null) return -1;
+        return moversSort.asc ? kx - ky : ky - kx;
+      });
+      moversOrder = new Map(rows.map((r, i) => [r.m.id, i]));
+      sortSourceLabel = sourceLabel();
+    }
     document.querySelectorAll(".col-sort").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.sort === moversSort.key);
       btn.classList.toggle("asc", btn.dataset.sort === moversSort.key && moversSort.asc);
       const active = btn.dataset.sort === moversSort.key;
       btn.setAttribute("aria-pressed", active);
-      btn.setAttribute("aria-label", `Sort by ${btn.dataset.sort === "delta" ? "absolute change in percentage points" : btn.dataset.sort + " probability"}${active ? ", currently " + (moversSort.asc ? "ascending" : "descending") : ""}`);
+      btn.setAttribute("aria-label", `Sort by ${btn.dataset.sort === "delta" ? "absolute change in percentage points" : btn.dataset.sort + " probability"}${active ? ", ordered using " + sortSourceLabel + ", " + (moversSort.asc ? "ascending" : "descending") : ""}`);
     });
 
     const maxAbs = Math.max(0.5, ...rows.map((r) => Math.abs(r.d ?? 0)));
@@ -229,7 +266,7 @@
     const fromLabel = snapFull(DATA.snapshots[fromIdx]);
     const toLabel = snapFull(DATA.snapshots[toIdx]);
     const sortName = { delta: "absolute change", from: "From price", to: "To price" }[moversSort.key];
-    $("movers-summary").textContent = `${rows.length} market${rows.length === 1 ? "" : "s"} · ${fromLabel} → ${toLabel} · sorted by ${sortName} (${moversSort.asc ? "low to high" : "high to low"})${rows.length ? " · select a row to chart it" : ""}`;
+    $("movers-summary").textContent = `${sourceLabel()} · ${rows.length} market${rows.length === 1 ? "" : "s"} · ${fromLabel} → ${toLabel} · ordered by ${sortSourceLabel} ${sortName} (${moversSort.asc ? "low to high" : "high to low"})${rows.length ? " · select a row to chart it" : ""}`;
     if (!rows.length) {
       const note = document.createElement("div");
       note.className = "empty-note";
@@ -240,8 +277,10 @@
       note.append(reset); list.append(note);
     }
     if (rows.some(r => r.a == null || r.b == null)) {
-      const first = Math.min(...rows.map(r => r.m.prices.findIndex(p => p != null)).filter(i => i >= 0));
-      $("movers-summary").textContent += ` · — = no observation; ${series === "all" ? "Available" : shortSeries(series)} history begins ${DATA.snapshots[first].label}. Coverage varies by market.`;
+      const first = Math.min(...rows.map(r => pricesFor(r.m).findIndex(p => p != null)).filter(i => i >= 0));
+      $("movers-summary").textContent += Number.isFinite(first)
+        ? ` · — = no observation; ${series === "all" ? "Available" : shortSeries(series)} history begins ${DATA.snapshots[first].label}. Coverage varies by market.`
+        : ` · No ${sourceLabel()} observations for these markets.`;
     }
     if (fromIdx > toIdx) $("movers-summary").textContent += " · Reverse comparison: change is To minus From";
     if (fromIdx === toIdx) {
@@ -366,7 +405,7 @@
     const body = selectedMarkets
       .map((id) => {
         const m = DATA.markets.find((x) => x.id === id);
-        const cells = indices.map(i => m.prices[i]).map((p) => `<td>${fmt(p)}</td>`).join("");
+        const cells = indices.map(i => pricesFor(m)[i]).map((p) => `<td>${fmt(p)}</td>`).join("");
         return `<tr><th scope="row">${esc(m.name)}</th>${cells}</tr>`;
       })
       .join("");
@@ -374,7 +413,8 @@
   }
 
   function chartStart() {
-    return $("full-season").checked ? 0 : Math.min(...selectedMarkets.map(id => DATA.markets.find(m => m.id === id).prices.findIndex(p => p != null)));
+    const starts = selectedMarkets.map(id => pricesFor(DATA.markets.find(m => m.id === id)).findIndex(p => p != null)).filter(i => i >= 0);
+    return $("full-season").checked || !starts.length ? 0 : Math.min(...starts);
   }
 
   function drawChart() {
@@ -389,13 +429,13 @@
     const n = DATA.snapshots.length;
     const start = chartStart();
     $("ts-tooltip").hidden = true;
-    $("chart-range").textContent = `${DATA.snapshots[start].label} – ${DATA.snapshots[n - 1].label} · Probabilities (%) · Hover or tap to inspect`;
+    $("chart-range").textContent = `${sourceLabel()} · ${DATA.snapshots[start].label} – ${DATA.snapshots[n - 1].label} · Probabilities (%) · Hover or tap to inspect`;
     svg.setAttribute("aria-label", `Market probabilities, ${DATA.snapshots[start].label} to ${DATA.snapshots[n-1].label}. Exact values in the data table below.`);
     const pad = { top: 18, right: 66, bottom: 34, left: 44 };
     const iw = W - pad.left - pad.right;
     const ih = H - pad.top - pad.bottom;
 
-    const allVals = markets.flatMap((m) => m.prices).filter((v) => v != null);
+    const allVals = markets.flatMap((m) => pricesFor(m)).filter((v) => v != null);
     let yMax = Math.min(100, Math.ceil((Math.max(5, ...allVals) * 1.12) / 5) * 5);
     const yMin = 0;
 
@@ -429,13 +469,13 @@
       const color = colorFor(m.id);
       let dPath = "";
       let started = false;
-      m.prices.forEach((p, i) => {
+      pricesFor(m).forEach((p, i) => {
         if (i < start || p == null) { started = false; return; }
         dPath += `${started ? "L" : "M"}${xPos(i)},${yPos(p)}`;
         started = true;
       });
       if (dPath) el("path", { d: dPath, stroke: color, "stroke-dasharray": dashFor(m.id), class: "series-line" });
-      m.prices.forEach((p, i) => {
+      pricesFor(m).forEach((p, i) => {
         if (i < start || p == null) return;
         el("circle", { cx: xPos(i), cy: yPos(p), r: 4, fill: color, class: "series-pt" });
       });
@@ -444,8 +484,8 @@
     // direct end labels, collision-shifted
     const labels = markets
       .map((m, mi) => {
-        const lastIdx = m.prices.map((p, i) => (p != null ? i : -1)).reduce((a, b) => Math.max(a, b), -1);
-        return lastIdx < 0 ? null : { mi, id: m.id, x: xPos(lastIdx), endpointY: yPos(m.prices[lastIdx]), y: yPos(m.prices[lastIdx]), v: m.prices[lastIdx], name: m.name };
+        const lastIdx = pricesFor(m).map((p, i) => (p != null ? i : -1)).reduce((a, b) => Math.max(a, b), -1);
+        return lastIdx < 0 ? null : { mi, id: m.id, x: xPos(lastIdx), endpointY: yPos(pricesFor(m)[lastIdx]), y: yPos(pricesFor(m)[lastIdx]), v: pricesFor(m)[lastIdx], name: m.name };
       })
       .filter(Boolean)
       .sort((a, b) => a.y - b.y);
@@ -482,7 +522,7 @@
       cross.setAttribute("x2", xPos(idx));
       cross.setAttribute("visibility", "visible");
       const rowsHtml = markets
-        .map((m, mi) => ({ m, mi, v: m.prices[idx] }))
+        .map((m, mi) => ({ m, mi, v: pricesFor(m)[idx] }))
         .filter((r) => r.v != null)
         .sort((a, b) => b.v - a.v)
         .map((r) => `<div class="tt-row">${lineKey(r.m.id)}
@@ -615,11 +655,11 @@
       return list;
     }
     const last = DATA.snapshots.length - 1;
-    [...markets].sort((a, b) => (b.prices[last] ?? -1) - (a.prices[last] ?? -1) || a.name.localeCompare(b.name)).forEach(m => {
+    [...markets].sort((a, b) => (pricesFor(b, "average")[last] ?? -1) - (pricesFor(a, "average")[last] ?? -1) || a.name.localeCompare(b.name)).forEach(m => {
       const row = document.createElement("div");
       row.className = "market-card";
-      const value = m.prices[last];
-      const previous = m.prices[last - 1];
+      const value = pricesFor(m)[last];
+      const previous = pricesFor(m)[last - 1];
       const delta = value != null && previous != null ? value - previous : null;
       const name = document.createElement("div");
       name.className = "market-name";
@@ -648,7 +688,7 @@
     const note = document.createElement("p");
     note.className = "movers-summary";
     const n = DATA.snapshots.length;
-    note.textContent = `Latest snapshot: ${snapFull(DATA.snapshots[n - 1])}. ${n > 1 ? `Changes since ${snapFull(DATA.snapshots[n - 2])}, in percentage points.` : "No previous snapshot for comparison."} — means no observation.`;
+    note.textContent = `${sourceLabel()} · Latest snapshot: ${snapFull(DATA.snapshots[n - 1])}. ${n > 1 ? `Changes since ${snapFull(DATA.snapshots[n - 2])}, in percentage points.` : "No previous snapshot for comparison."} — means no observation.`;
     container.append(note);
   }
 

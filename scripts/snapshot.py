@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Fetch a Polymarket NBA futures snapshot and write it to snapshots/ as CSV.
+"""Fetch Kalshi and Polymarket NBA futures snapshots and write it to snapshots/ as CSV.
 
-Prices come from the CLOB prices-history endpoint, so a snapshot can be taken
+Polymarket prices come from the CLOB prices-history endpoint, so a snapshot can be taken
 for any past timestamp (the last trade price at or before the target time).
 
 Usage:
@@ -220,8 +220,11 @@ def main() -> None:
     else:
         targets = [most_recent_snapshot_time(now_et)]
 
+    from kalshi import take_snapshot as take_kalshi_snapshot
+
     wrote = 0
     for target in targets:
+        take_kalshi_snapshot(target)
         if take_snapshot(target) is not None:
             wrote += 1
     print(f"done: {wrote} snapshot(s) written, {len(targets) - wrote} skipped")

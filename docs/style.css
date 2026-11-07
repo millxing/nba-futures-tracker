@@ -431,3 +431,15 @@ h3 { font: 600 1.35rem var(--display); margin: 28px 0 12px; }
   .chip button { margin-left: 0; }
   .chip .favorite-button { margin-left: auto; }
 }
+
+/* One source selection applies to all views. Native radios support arrow keys. */
+.source-toggle { display: flex; flex-wrap: wrap; gap: 4px; border: 0; padding: 0; margin: 0; }
+.source-toggle legend { color: var(--ink-muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .14em; margin-bottom: 6px; }
+.source-toggle label { position: relative; cursor: pointer; }
+.source-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.source-toggle span { display: block; min-height: 44px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--baseline); border-radius: 6px; color: var(--ink-2); }
+.source-toggle input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--page); }
+.source-toggle input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 3px; }
+.source-note { color: var(--ink-muted); font-size: .8rem; margin: 10px 0 22px; }
+
+footer .source-note, footer .movers-summary { margin: 0 0 8px; }

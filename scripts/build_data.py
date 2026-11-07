@@ -14,6 +14,9 @@ import json
 import os
 import re
 import sys
+import unicodedata
+
+from kalshi import EVENTS as KALSHI_EVENTS, path_for as kalshi_path
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
@@ -102,6 +105,38 @@ def read_snapshot(path):
     return out
 
 
+def name_key(name):
+    name = {"LA Clippers": "Los Angeles Clippers"}.get(name, name)
+    name = unicodedata.normalize("NFKD", name)
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def read_kalshi(dt, lookup, team_names):
+    path = kalshi_path(dt.replace(tzinfo=EASTERN))
+    if not path.exists():
+        raise ValueError(f"Missing Kalshi snapshot: {path}; run python3 scripts/kalshi.py --backfill")
+    result = {}
+    with path.open(newline="") as f:
+        for row in csv.DictReader(f):
+            series = KALSHI_EVENTS[row["event_ticker"]]
+            name = row["outcome"].strip()
+            if series in TEAM_SERIES:
+                name = {"Los Angeles C": "LA Clippers", "Los Angeles L": "Los Angeles Lakers"}.get(name, name)
+                matches = [t for t in team_names if t == name or t.startswith(name + " ")]
+                if len(matches) != 1:
+                    raise ValueError(f"Ambiguous or unknown Kalshi team: {name}")
+                name = matches[0]
+            match = lookup.get((series, name_key(name)))
+            mid = match[0] if match else "kalshi:" + row["ticker"]
+            if mid in result:
+                raise ValueError(f"Duplicate Kalshi match: {mid}")
+            result[mid] = {"series": series, "name": match[1]["name"] if match else name,
+                           "question": match[1]["question"] if match else row["market_title"],
+                           "open_time": row["market_open_time"],
+                           "price": round(float(row["midpoint"]) * 100, 1) if row["data_status"] == "ok" else None}
+    return result
+
+
 # New CLOB books are seeded at ~50c before any real trading, and prices-history
 # reports that seed as if it were a price. Strip a market's leading run of
 # ~50 prices when it sits within days of the market's open date and the first
@@ -167,11 +202,27 @@ def main():
         per_snapshot.append(read_snapshot(path))
         print(f"  {sid}: {len(per_snapshot[-1])} markets")
 
+    lookup, team_names = {}, set()
+    for snap in per_snapshot:
+        for mid, row in snap.items():
+            key = (row["series"], name_key(row["name"]))
+            if key in lookup and lookup[key][0] != mid:
+                raise ValueError(f"Ambiguous Polymarket match: {key}")
+            lookup[key] = (mid, row)
+            if row["series"] in TEAM_SERIES:
+                team_names.add(row["name"])
+    kalshi_snapshots = [read_kalshi(dt, lookup, team_names) for dt, _, _ in files]
+
     # Collect all markets across snapshots; metadata from latest appearance.
     meta = {}
     for snap in per_snapshot:
         for mid, row in snap.items():
             meta[mid] = row
+
+    for snap in kalshi_snapshots:
+        for mid, row in snap.items():
+            if mid not in meta:
+                meta[mid] = row
 
     series_seen = {m["series"] for m in meta.values()}
     unknown = series_seen - set(SERIES_ORDER)
@@ -193,7 +244,8 @@ def main():
             stripped += 1
         # Keep empty markets in raw snapshots, but omit them from both site views.
         # A real zero price is still valid history.
-        if all(price is None for price in cleaned):
+        kalshi_prices = [snap.get(mid, {}).get("price") for snap in kalshi_snapshots]
+        if all(price is None for price in cleaned + kalshi_prices):
             continue
         markets.append(
             {
@@ -201,7 +253,7 @@ def main():
                 "series": m["series"],
                 "name": m["name"],
                 "question": m["question"],
-                "prices": cleaned,
+                "prices": {"polymarket": cleaned, "kalshi": kalshi_prices},
             }
         )
     if stripped:

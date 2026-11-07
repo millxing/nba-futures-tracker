@@ -191,6 +191,10 @@ def main():
         cleaned = strip_seed_prices(prices, snap_epochs, m["open_time"])
         if cleaned is not prices:
             stripped += 1
+        # Keep empty markets in raw snapshots, but omit them from both site views.
+        # A real zero price is still valid history.
+        if all(price is None for price in cleaned):
+            continue
         markets.append(
             {
                 "id": mid,

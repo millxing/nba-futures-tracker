@@ -31,6 +31,21 @@ python3 scripts/build_data.py
 
 Then commit and push; GitHub Pages redeploys on push.
 
+## Trigger a snapshot on GitHub now
+
+Scheduled runs are often delayed. To run the snapshot workflow immediately
+(works from any folder):
+
+```bash
+gh workflow run snapshot.yml --repo millxing/nba-futures-tracker
+```
+
+Once it finishes, pull the new commit into the local copy:
+
+```bash
+git -C ~/Dropbox/CC/NBA_Information pull
+```
+
 ## Tracked series
 
 Defined in `scripts/snapshot.py` (`EVENTS`, Polymarket event slugs) and ordered
@@ -57,3 +72,27 @@ Daily 6 AM snapshots get automatic date labels ("Sep 18"). Optional
 - `scripts/build_data.py` — converts all snapshots to `docs/data/data.json`
 - `docs/` — the site: `index.html`, `app.js`, `style.css`, `data/data.json`
 - `.github/workflows/snapshot.yml` — daily 6 AM ET automation
+
+## Team pages and favorites
+
+The **Teams** tab groups each team's futures, MVP candidates, and Rookie of
+the Year candidates. Team links use hash routes (for example `#teams/washington-wizards`),
+so they work directly on GitHub Pages. Player award history follows the player;
+team affiliations reflect the cached current roster, not historical rosters.
+
+Star teams or individual markets from Teams, Daily Movers, or chart selections.
+The **Favorites** tab includes all markets for saved teams plus individually
+saved markets, deduplicated. Favorites use browser local storage, with no account
+or cross-device sync. If storage is blocked, favorites work for the current visit.
+
+`python3 scripts/update_rosters.py` refreshes `docs/data/rosters.json` from ESPN's
+team roster API. The daily workflow refreshes it before rebuilding new snapshot
+data. A failed or incomplete refresh preserves the last complete cache. Team
+pages show its update time; unmatched candidates remain available in Daily
+Movers and can still be favorited individually. Names are matched without case,
+accents, or punctuation; LA Clippers is normalized to Los Angeles Clippers.
+
+`scripts/roster_supplements.json` records sourced roster omissions (such as G League
+assignments). Supplements apply only when the player is absent from every ESPN
+roster, so an explicit new team from ESPN takes precedence. Review supplements
+when affiliations change; each entry includes its verification date and source.

@@ -23,24 +23,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to markets</a>
 
 <header class="masthead">
   <div class="masthead-inner">
     <h1>NBA <span>Futures</span> Tracker</h1>
-    <p class="tagline">How each day of the season moves the market's view of the endgame &mdash; Polymarket prices, snapshotted every morning at 6 AM ET.</p>
+    <p class="tagline">Polymarket probabilities · Daily snapshots at 6 AM ET.</p>
   </div>
-  <nav class="tabs" role="tablist">
-    <button class="tab active" data-view="movers" role="tab" aria-selected="true">Daily Movers</button>
-    <button class="tab" data-view="series" role="tab" aria-selected="false">Time Series</button>
+  <nav class="tabs" role="tablist" aria-label="Market views">
+    <button class="tab active" id="tab-movers" aria-controls="view-movers" tabindex="0" data-view="movers" role="tab" aria-selected="true">Daily Movers</button>
+    <button class="tab" id="tab-series" aria-controls="view-series" tabindex="-1" data-view="series" role="tab" aria-selected="false">Time Series</button>
+    <button class="tab" id="tab-teams" aria-controls="view-teams" tabindex="-1" data-view="teams" role="tab" aria-selected="false">Teams</button>
+    <button class="tab" id="tab-favorites" aria-controls="view-favorites" tabindex="-1" data-view="favorites" role="tab" aria-selected="false">Favorites</button>
   </nav>
 </header>
 
-<main>
+<main id="main" tabindex="-1">
   <!-- ============ MOVERS VIEW ============ -->
-  <section id="view-movers" class="view active">
+  <section role="tabpanel" aria-labelledby="tab-movers" id="view-movers" class="view active">
     <div class="controls">
       <div class="control">
         <label for="from-select">From</label>
@@ -61,20 +64,20 @@
       </div>
     </div>
 
-    <div class="movers-summary" id="movers-summary"></div>
+    <div class="movers-summary" id="movers-summary" role="status"></div>
     <div class="movers-header">
       <span class="col-rank">#</span>
       <span class="col-name">Market</span>
-      <button type="button" class="col-sort col-from" data-sort="from">From</button>
-      <button type="button" class="col-sort col-to" data-sort="to">To</button>
+      <button type="button" class="col-sort col-from" data-sort="from">From %</button>
+      <button type="button" class="col-sort col-to" data-sort="to">To %</button>
       <span class="col-bar">Change</span>
-      <button type="button" class="col-sort col-delta" data-sort="delta">&Delta;</button>
+      <button type="button" class="col-sort col-delta" data-sort="delta">Δ pp</button>
     </div>
     <div id="movers-list" class="movers-list"></div>
   </section>
 
   <!-- ============ TIME SERIES VIEW ============ -->
-  <section id="view-series" class="view">
+  <section role="tabpanel" aria-labelledby="tab-series" id="view-series" class="view">
     <div class="controls">
       <div class="control">
         <label for="ts-series-select">Series</label>
@@ -86,22 +89,35 @@
         <div id="ts-suggestions" class="suggestions" hidden></div>
       </div>
     </div>
+    <div class="chart-tools"><span id="selection-status" role="status"></span><button id="clear-markets" type="button">Clear all</button><label><input id="full-season" type="checkbox"> Full season</label></div>
+    <p id="chart-range" class="movers-summary"></p>
     <div id="ts-chips" class="chips"></div>
     <div id="ts-chart-wrap" class="chart-wrap">
       <svg id="ts-chart" role="img" aria-label="Time series of market probabilities"></svg>
       <div id="ts-tooltip" class="tooltip" hidden></div>
     </div>
     <div id="ts-empty" class="empty-note">Pick a market above &mdash; or click any row in Daily Movers &mdash; to chart its probability across snapshots.</div>
-    <div id="ts-table-wrap" class="ts-table-wrap"></div>
+    <details id="data-details"><summary>Data table · latest first</summary><div id="ts-table-wrap" class="ts-table-wrap" tabindex="0" role="region" aria-label="Market probabilities by snapshot"></div></details>
   </section>
+  <section role="tabpanel" aria-labelledby="tab-teams" id="view-teams" class="view">
+    <div class="controls"><div class="control grow"><label for="team-select">Choose a team</label><select id="team-select"><option value="">All teams</option></select></div></div>
+    <div id="team-content"></div>
+    <p id="roster-note" class="movers-summary"></p>
+  </section>
+  <section role="tabpanel" aria-labelledby="tab-favorites" id="view-favorites" class="view">
+    <h2>Your favorites</h2>
+    <p class="movers-summary">Save teams and individual markets with the star buttons. Favorites stay in this browser.</p>
+    <div id="favorites-content"></div>
+  </section>
+  <p id="favorite-status" class="movers-summary" role="status" aria-live="polite"></p>
 </main>
 
 <footer>
   <span id="gen-note"></span>
   <span class="sep">&middot;</span>
-  <span>Prices are Polymarket midpoints, shown as implied probability (%)</span>
+  <span><a href="https://polymarket.com">Polymarket</a> price history · Probabilities in %; change in percentage points (pp). — means no observation. MVP snapshots for Oct 20–21 were backfilled from historical observations at or before 6 AM ET.</span>
 </footer>
 
-<script src="app.js?v=3"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

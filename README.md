@@ -106,7 +106,7 @@ when affiliations change; each entry includes its verification date and source.
 The global Kalshi / Polymarket / Average selector applies to Movers, Time Series,
 Teams, and Favorites. Average is the equal-weight mean of the two prices and
 requires both observations. Missing prices remain blank; no single-source fallback.
-Movers initially sorts by Average absolute delta (percentage points), descending.
+Movers resets to Average To % (latest probability), descending, on every open or refresh.
 Switching sources preserves row order. Clicking a sort header, changing dates,
 or filtering recalculates the order using the selected source. Teams and Favorites
 keep their latest Average price order across source changes.

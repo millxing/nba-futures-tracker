@@ -170,7 +170,7 @@
     }
   }
 
-  const moversSort = { key: "delta", asc: false };
+  const moversSort = { key: "to", asc: false };
   let moversOrder = new Map();
   let sortSourceLabel = "Average";
 

@@ -23,16 +23,17 @@ function source(value) {
 }
 setTimeout(() => {
   try {
-    assert.match($('#movers-summary').textContent, /ordered by Average absolute change/);
+    assert.match($('#movers-summary').textContent, /ordered by Average To price \(high to low\)/);
+    assert.equal($('.col-sort.active').dataset.sort, 'to');
     const initial = order();
     assert.equal(initial.length, data.markets.length);
     const from = +$('#from-select').value, to = +$('#to-select').value;
     const avg = (m,i) => m.prices.polymarket[i] == null || m.prices.kalshi[i] == null ? null : (m.prices.polymarket[i]+m.prices.kalshi[i])/2;
     let previous = Infinity;
     for (const id of initial) {
-      const m = data.markets.find(m=>m.id===id), a=avg(m,from), b=avg(m,to);
-      const delta = a == null || b == null ? -1 : Math.abs(b-a);
-      assert(delta <= previous); previous = delta;
+      const m = data.markets.find(m=>m.id===id);
+      const probability = avg(m,to) ?? -1;
+      assert(probability <= previous); previous = probability;
     }
     for (const value of ['kalshi','polymarket','average']) {
       source(value); assert.deepEqual(order(), initial);
@@ -41,6 +42,7 @@ setTimeout(() => {
       assert.equal(all('.mover-entry')[0].querySelectorAll('.price')[1].textContent, expected==null?'—':expected.toFixed(1));
     }
     source('kalshi');
+    $('[data-sort="delta"]').click();
     $('[data-sort="to"]').click();
     assert.match($('#movers-summary').textContent,/ordered by Kalshi To price/);
     const sorted=order(); source('average'); assert.deepEqual(order(),sorted);
@@ -64,7 +66,7 @@ setTimeout(() => {
     source('polymarket');
     assert.deepEqual(all('#favorites-content [data-favorite]').map(b=>b.dataset.favorite),favoritesBefore);
     assert.deepEqual(errors, []);
-    console.log('PASS: average/delta default, stable source switching, explicit sorting, charts, missing history, teams and favorites');
+    console.log('PASS: average/To % default, stable source switching, explicit sorting, charts, missing history, teams and favorites');
   } catch(e) { console.error(e); process.exitCode=1; }
   finally { w.close(); }
 }, 100);

@@ -167,9 +167,6 @@ select, input[type="search"] {
 }
 .col-sort:hover { color: var(--ink-2); }
 .col-sort.active { color: var(--accent); }
-.col-sort::after { content: " ↕"; }
-.col-sort.active::after { content: " ▾"; }
-.col-sort.active.asc::after { content: " ▴"; }
 
 .movers-list { border-radius: 0 0 8px 8px; }
 .mover-row {

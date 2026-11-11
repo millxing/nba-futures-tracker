@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-10 17:38 UTC",
+  "updated": "2026-11-11 17:50 UTC",
   "teams": [
     {
       "id": "atl",
@@ -31,6 +31,7 @@
       "name": "Boston Celtics",
       "players": [
         "Devin Carter",
+        "Chris Cenac Jr.",
         "Mike Conley",
         "Luka Garza",
         "Paul George",
@@ -45,8 +46,7 @@
         "Jayson Tatum",
         "Jordan Walsh",
         "Derrick White",
-        "Amari Williams",
-        "Chris Cenac Jr."
+        "Amari Williams"
       ],
       "source": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/2/roster"
     },
@@ -209,7 +209,6 @@
         "Daniss Jenkins",
         "Isaiah Joe",
         "Isaac Jones",
-        "Chaz Lanier",
         "Ebuka Okorie",
         "Ugonna Onyenso",
         "Taurean Prince",
@@ -324,6 +323,7 @@
       "name": "Los Angeles Lakers",
       "players": [
         "Cameron Carr",
+        "Carson Cooper",
         "Luka Doncic",
         "Quentin Grimes",
         "Jaden Hardy",
@@ -332,7 +332,6 @@
         "Walker Kessler",
         "Jake LaRavia",
         "Kevon Looney",
-        "Lawson Lovering",
         "Sandro Mamukelashvili",
         "Chris Manon",
         "AK Okereke",
@@ -350,7 +349,6 @@
       "name": "Memphis Grizzlies",
       "players": [
         "Cameron Boozer",
-        "Carson Cooper",
         "Cedric Coward",
         "Zach Edey",
         "Jerami Grant",
@@ -430,7 +428,6 @@
         "Donte DiVincenzo",
         "Ayo Dosunmu",
         "Anthony Edwards",
-        "Isaiah Evans",
         "Rudy Gobert",
         "Bones Hyland",
         "Jonathan Kuminga",
@@ -735,13 +732,5 @@
       "source": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/27/roster"
     }
   ],
-  "supplements": [
-    {
-      "player": "Chris Cenac Jr.",
-      "team": "Boston Celtics",
-      "verified": "2026-11-07",
-      "source": "https://www.nba.com/team/1610612738/roster",
-      "reason": "NBA roster lists him; ESPN roster omits him during his Maine assignment. Used only if absent from all ESPN team rosters."
-    }
-  ]
+  "supplements": []
 }

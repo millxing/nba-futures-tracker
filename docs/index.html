@@ -71,12 +71,12 @@
     </div>
 
     <div class="movers-header">
-      <span class="col-rank">#</span>
-      <span class="col-name">Market</span>
-      <button type="button" class="col-sort col-from" data-sort="from">From %</button>
-      <button type="button" class="col-sort col-to" data-sort="to">To %</button>
-      <span class="col-bar">Change</span>
-      <button type="button" class="col-sort col-delta" data-sort="delta">Δ pp</button>
+      <span class="col-rank" title="Row position in the current sort order.">#</span>
+      <span class="col-name" title="Team or player and the outcome being priced. Select a row to view its probability history.">Market</span>
+      <button type="button" class="col-sort col-from" data-sort="from" title="Implied probability (%) at the From snapshot, using the selected price source. Click to sort; click again to reverse.">From %</button>
+      <button type="button" class="col-sort col-to" data-sort="to" title="Implied probability (%) at the To snapshot, using the selected price source. Click to sort; click again to reverse.">To %</button>
+      <span class="col-bar" title="Probability change from From to To. Bars show direction and size relative to the largest change in the filtered list.">Change</span>
+      <button type="button" class="col-sort col-delta" data-sort="delta" title="To probability minus From probability, in percentage points (pp). A move from 20% to 25% is +5 pp. Click to sort by absolute change (size, regardless of sign); click again to reverse.">Δ pp</button>
     </div>
     <div id="movers-list" class="movers-list"></div>
   </section>
@@ -125,6 +125,6 @@
   <span><a href="https://kalshi.com">Kalshi</a> + <a href="https://polymarket.com">Polymarket</a> price history · Probabilities in %; change in percentage points (pp). — means no observation. MVP snapshots for Oct 20–21 were backfilled from historical observations at or before 6 AM ET.</span>
 </footer>
 
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
